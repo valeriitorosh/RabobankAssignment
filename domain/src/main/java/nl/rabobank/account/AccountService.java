@@ -4,17 +4,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.rabobank.account.dto.AccountDto;
 import nl.rabobank.account.exceptions.AccountAlreadyExistsException;
+import nl.rabobank.account.exceptions.AccountNotFoundException;
+import nl.rabobank.account.exceptions.InvalidAccountGrantorException;
+import nl.rabobank.account.exceptions.PowerOfAttorneyAlreadyExistsException;
 import nl.rabobank.account.interfaces.AccountRepository;
-import nl.rabobank.authorizations.interfaces.PowerOfAttorneyRepository;
+import nl.rabobank.authorizations.Authorization;
+import nl.rabobank.authorizations.PowerOfAttorney;
+import nl.rabobank.authorizations.dto.PowerOfAttorneyDto;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 @Slf4j
 public class AccountService {
-    private final PowerOfAttorneyRepository powerOfAttorneyRepository;
     private final AccountRepository accountRepository;
     private final AccountFactory accountFactory;
 
@@ -41,16 +44,86 @@ public class AccountService {
 
     public List<AccountDto> getAvailableAccounts(String name) {
         log.info("Getting available accounts for name {}", name);
-        final var ownAccounts = accountRepository.findAllByAccountHolderName(name);
-        final var grantedAccounts = powerOfAttorneyRepository.findAllAccountsByGranteeName(name);
-        final var accountStream = Stream.concat(ownAccounts.stream(), grantedAccounts.stream());
+        final var accounts = accountRepository.findAllAvailableAccountsByClientsName(name);
 
-        return accountStream
-                .map(r -> AccountDto.builder()
-                        .accountNumber(r.getAccountNumber())
-                        .accountHolderName(r.getAccountHolderName())
-                        .balance(r.getBalance())
+        return accounts.stream()
+                .map(a -> AccountDto.builder()
+                        .accountNumber(a.getAccountNumber())
+                        .accountHolderName(a.getAccountHolderName())
+                        .balance(a.getBalance())
                 .build())
                 .collect(Collectors.toList());
+    }
+
+    public PowerOfAttorneyDto grantPowerOfAttorney(String grantorName, String granteeName, String accountNumber, Authorization authorization) {
+        log.info("Creation PowerOfAttorney: grantorName = {}, granteeName = {}, accountNumber = {}, authorization = {}",
+                grantorName, granteeName, accountNumber, authorization);
+        final Account account = findAndValidateAccount(grantorName, accountNumber);
+
+        final var powerOfAttorney = PowerOfAttorney.builder()
+                .grantorName(grantorName)
+                .granteeName(granteeName)
+                .account(account)
+                .authorization(authorization)
+                .build();
+
+        if (account.getGrants().contains(powerOfAttorney)) {
+            log.info("PowerOfAttorney already exists: grantorName = {}, granteeName = {}, accountNumber = {}, authorization = {}",
+                    grantorName, granteeName, accountNumber, authorization);
+            final var message = String.format("PowerOfAttorney already exists: grantorName = %s, granteeName = %s, accountNumber = %s, authorization = %s.",
+                    grantorName, granteeName, accountNumber, authorization);
+            throw new PowerOfAttorneyAlreadyExistsException(message);
+        }
+
+        account.getGrants().add(powerOfAttorney);
+        accountRepository.save(account);
+
+        log.info("Created PowerOfAttorney: grantorName = {}, granteeName = {}, accountNumber = {}, authorization = {}",
+                grantorName, granteeName, accountNumber, authorization);
+
+        return PowerOfAttorneyDto.builder()
+                .accountNumber(powerOfAttorney.getAccount().getAccountNumber())
+                .grantorName(powerOfAttorney.getGrantorName())
+                .granteeName(powerOfAttorney.getGranteeName())
+                .authorization(powerOfAttorney.getAuthorization().name())
+                .build();
+    }
+
+    public void revokePowerOfAttorney(String grantorName, String granteeName, String accountNumber, Authorization authorization) {
+        log.info("Deletion PowerOfAttorney: grantorName = {}, granteeName = {}, accountNumber = {}, authorization = {}",
+                grantorName, granteeName, accountNumber, authorization);
+        final Account account = findAndValidateAccount(grantorName, accountNumber);
+
+        final var powerOfAttorney = PowerOfAttorney.builder()
+                .grantorName(grantorName)
+                .granteeName(granteeName)
+                .account(account)
+                .authorization(authorization)
+                .build();
+
+        final var isRemoved = account.getGrants().remove(powerOfAttorney);
+
+        if(isRemoved) {
+            accountRepository.save(account);
+            log.info("Deleted PowerOfAttorney: grantorName = {}, granteeName = {}, accountNumber = {}, authorization = {}",
+                    grantorName, granteeName, accountNumber, authorization);
+        } else {
+            log.info("PowerOfAttorney has not been deleted (dos not exists): grantorName = {}, granteeName = {}, accountNumber = {}, authorization = {}",
+                    grantorName, granteeName, accountNumber, authorization);
+        }
+    }
+
+    private Account findAndValidateAccount(String grantorName, String accountNumber) {
+        final var optionalAccount = accountRepository.findByAccountNumber(accountNumber);
+        final var account = optionalAccount
+                .orElseThrow(() -> {
+                    final var message = String.format("Account: %s not found.", accountNumber);
+                    return new AccountNotFoundException(message);});
+
+        if (!account.getAccountHolderName().equals(grantorName)) {
+            final var message = String.format("Grantor %s is not the owner of the account: %s.",grantorName, accountNumber);
+            throw new InvalidAccountGrantorException(message);
+        }
+        return account;
     }
 }

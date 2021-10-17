@@ -2,10 +2,18 @@
 
 The service is responsible for granting and revoking access to clients accounts. 
 
+## Assumption
+-I assume that PowerOfAttorney is a value object in terms of DDD (does not have identifier). This why I used it as an account property.
+-Only account holder can grant or revoke access to his or her accounts.
+-Client can READ an account if he or she has READ or WRITE Authorization.
+
 ## Possible improvements
-- Introduce Spring Security to establish users authentication and authorization rules.
+- Introduce API Gateway (with Spring Security) to establish users authentication and authorization rules.
 - Business logic should be discussed with Domain expert.
 - Improve MongoDB data model.
+- Introduce Swagger for API description.
+- Javadoc for classes and public methods.
+
 ## How to run it locally (via Docker-compose)
 1.  build the project
 

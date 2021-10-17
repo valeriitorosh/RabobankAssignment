@@ -1,4 +1,4 @@
-package nl.rabobank.authorizations.exceptions;
+package nl.rabobank.account.exceptions;
 
 public class InvalidAccountGrantorException extends RuntimeException{
     public InvalidAccountGrantorException(String message) {

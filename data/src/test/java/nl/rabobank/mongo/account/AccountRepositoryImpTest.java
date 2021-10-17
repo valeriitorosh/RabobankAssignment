@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.same;
@@ -50,24 +51,48 @@ class AccountRepositoryImpTest {
     }
 
     @Test
-    void shouldFindAllAccountsByAccountHolderName() {
+    void shouldFindAccountByAccountNumber() {
 
         //Given
         final var accountNumber = "1234-567-89";
-        final var accountHolderName = "John Lennon";
+        final var clientName = "John Lennon";
         final var accountRecord = AccountRecord.builder()
                 .accountNumber(accountNumber)
-                .accountHolderName(accountHolderName)
+                .accountHolderName(clientName)
                 .type("PAYMENT")
                 .balance(9.99)
                 .build();
         final var account = new PaymentAccount(accountNumber, "John Lennon", 9.99);
 
-        when(accountInternalRepository.findAllByAccountHolderName(accountHolderName)).thenReturn(List.of(accountRecord));
+        when(accountInternalRepository.findById(accountNumber)).thenReturn(Optional.of(accountRecord));
         when(accountMapper.mapToAccount(accountRecord)).thenReturn(account);
 
         //When
-        final var result = accountRepositoryImp.findAllByAccountHolderName(accountHolderName);
+        final var result = accountRepositoryImp.findByAccountNumber(accountNumber);
+
+        //Then
+        assertThat(result).isEqualTo(Optional.of(account));
+    }
+
+    @Test
+    void shouldFindAllAvailableAccountsByClientName() {
+
+        //Given
+        final var accountNumber = "1234-567-89";
+        final var clientName = "John Lennon";
+        final var accountRecord = AccountRecord.builder()
+                .accountNumber(accountNumber)
+                .accountHolderName(clientName)
+                .type("PAYMENT")
+                .balance(9.99)
+                .build();
+        final var account = new PaymentAccount(accountNumber, "John Lennon", 9.99);
+
+        when(accountInternalRepository.findAllAvailableAccounts(clientName)).thenReturn(List.of(accountRecord));
+        when(accountMapper.mapToAccount(accountRecord)).thenReturn(account);
+
+        //When
+        final var result = accountRepositoryImp.findAllAvailableAccountsByClientsName(clientName);
 
         //Then
         assertThat(result).containsExactlyInAnyOrderElementsOf(List.of(account));
