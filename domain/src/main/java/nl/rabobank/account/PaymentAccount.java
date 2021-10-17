@@ -1,5 +1,6 @@
 package nl.rabobank.account;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import nl.rabobank.authorizations.PowerOfAttorney;
 
@@ -7,8 +8,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Getter
-public class PaymentAccount implements Account
-{
+@EqualsAndHashCode(of = "accountNumber")
+public class PaymentAccount implements Account {
     String accountNumber;
     String accountHolderName;
     Double balance; // BigDecimal?
@@ -23,20 +24,5 @@ public class PaymentAccount implements Account
         this.accountHolderName = accountHolderName;
         this.balance = balance;
         this.grants = new HashSet<>();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        PaymentAccount that = (PaymentAccount) o;
-
-        return accountNumber.equals(that.accountNumber);
-    }
-
-    @Override
-    public int hashCode() {
-        return accountNumber.hashCode();
     }
 }

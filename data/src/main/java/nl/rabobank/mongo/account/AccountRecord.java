@@ -17,7 +17,7 @@ import java.util.Set;
         @CompoundIndex(name = "available_accounts",
                 def = "{'accountHolderName' : 1, 'grants.granteeName' : 1, 'grants.authorization': 1}")
 })
-public class AccountRecord
+class AccountRecord
 {
     @Id
     String accountNumber;
