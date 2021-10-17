@@ -7,5 +7,5 @@ public class PaymentAccount implements Account
 {
     String accountNumber;
     String accountHolderName;
-    Double balance;
+    Double balance; // BigDecimal?
 }

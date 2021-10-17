@@ -11,7 +11,11 @@
 
     <dependencies>
         <!-- Add your dependencies here! -->
-
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Mongo -->
         <dependency>
@@ -22,6 +26,12 @@
             <groupId>de.flapdoodle.embed</groupId>
             <artifactId>de.flapdoodle.embed.mongo</artifactId>
         </dependency>
+        <dependency>
+            <groupId>nl.rabobank</groupId>
+            <artifactId>rabobank-assignment-domain</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
     </dependencies>
 
 

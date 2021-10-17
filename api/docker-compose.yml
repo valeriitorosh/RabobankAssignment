@@ -1,0 +1,7 @@
+version: '3.1'
+
+services:
+  rabobank-assignment-api:
+    image: valeriitorosh/rabobank-assignment-api
+    ports:
+      - "8080:8080"

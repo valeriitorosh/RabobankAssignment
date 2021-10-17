@@ -1,40 +1,75 @@
-## Rabobank Assignment for Authorizations Area
+# Rabobank Assignment for Authorizations Area
 
-This project contains several premade modules for you to implement your code. We hope this helps you with ´what to put
-where´.
+The service is responsible for granting and revoking access to clients accounts. 
 
-### API
+## Possible improvements
+- Introduce Spring Security to establish users authentication and authorization rules.
+- Business logic should be discussed with Domain expert.
+- Improve MongoDB data model.
+## How to run it locally (via Docker-compose)
+1.  build the project
 
-This module is where you have to implement the API interface and connect the other two modules
+```bash
+    ./mvnw clean install
+```
+2.  change to application directory
 
-### Data
+```bash
+    cd api
+```
+3. build a docker image
+```bash
+    ./build.sh
+   ```
 
-This module is where you implement all stateful Mongo data. We have provided an embedded Mongo configuration for you.
-You just need to design the data you need to store and the repositories to store or retrieve it with.
+4. run dockerized service `docker-compose.yml`
 
-### Domain
+```bash
+    docker-compose up
+```
+   
+5. The service is available on `http://localhost:8080`
 
-This module represents the domain you will be working with. The domain module presents classes for the power of attorney
-model that contains a Read or Write authorization for a Payment or Savings account.
+### Use case example
 
-## The task at hand
+```bash
+-- Create A-001 account
+curl --location --request POST 'localhost:8080/clients/TV-001/accounts' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "accountNumber": "A-001",
+    "type":"PAYMENT"
+}'
 
-Implement the following business requirement
+-- Create A-002 account
+curl --location --request POST 'localhost:8080/clients/TV-001/accounts' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "accountNumber": "A-002",
+    "type":"PAYMENT"
+}'
 
-- Users must be able to create write or read access for payments and savings accounts
-- Users need to be able to retrieve a list of accounts they have read or write access for
+-- Get all accounts for client TV_002 -> No accounts
+curl --location --request GET 'localhost:8080/clients/TV-002/accounts' \
+--header 'Content-Type: application/json'
 
-Boundaries
+-- Grant powerOfAttorney TV-001:[A-001] -> TV-002
+curl --location --request POST 'localhost:8080/clients/TV-001/accounts/A-001/powerOfAttorney' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "granteeName": "TV-002",
+    "authorization":"WRITE"
+}'
 
-- You can add dependencies as you like
-- You can design the data and API models as you like (what a dream, isn't it?)
+-- Get all accounts for client TV_002 -> A-001 account returned
+curl --location --request GET 'localhost:8080/clients/TV-002/accounts' \
+--header 'Content-Type: application/json'
 
-Notes
+-- Revoke powerOfAttorney TV-001:[A-001] -> TV-002
+curl --location --request DELETE 'localhost:8080/clients/TV-001/accounts/A-001/powerOfAttorney?granteeName=TV-002&authorization=WRITE' \
+--header 'Content-Type: application/json'
 
-- The code should be ready to go to production on delivery
-
-## Background information
-
-A Power of Attorney is used when someone (grantor) wants to give access to his/her account to someone else (grantee). This
-could be read access or write access. In this way the grantee can read/write in the grantors account.
-Notice that this is a simplified version of reality.
+-- Get all accounts for client TV_002 -> No accounts
+curl --location --request GET 'localhost:8080/clients/TV-002/accounts' \
+--header 'Content-Type: application/json'
+```
