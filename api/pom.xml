@@ -24,12 +24,12 @@
             <artifactId>rabobank-assignment-domain</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Add your dependencies here! -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- Add your dependencies here! -->
     </dependencies>
 
     <build>
